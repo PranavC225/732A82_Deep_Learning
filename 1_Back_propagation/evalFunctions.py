@@ -11,11 +11,9 @@ def calcAccuracy(LPred, LTrue):
         acc (float): Prediction accuracy.
     """
 
-    # --------------------------------------------
-    # === Your code here =========================
-    # --------------------------------------------
-    acc = None
-    # ============================================
+    correct = np.sum(LPred == LTrue)
+    total = len(LTrue)
+    acc = correct/total
     return acc
 
 
@@ -31,12 +29,12 @@ def calcConfusionMatrix(LPred, LTrue):
             and actual labels in the columns.
     """
 
-    # --------------------------------------------
-    # === Your code here =========================
-    # --------------------------------------------
-    cM = None
-    # ============================================
-
+    unique_labels = np.unique(np.concatenate((LPred, LTrue)))
+    num_classes = len(unique_labels)
+    cM = np.zeros((num_classes, num_classes), dtype=int)
+    for true_label, pred_label in zip(LTrue, LPred):
+        cM[pred_label, true_label] += 1
+    
     return cM
 
 
@@ -51,10 +49,8 @@ def calcAccuracyCM(cM):
         acc (float): Prediction accuracy.
     """
 
-    # --------------------------------------------
-    # === Your code here =========================
-    # --------------------------------------------
-    acc = None
-    # ============================================
+    correct_predictions = np.trace(cM)
+    total_predictions = np.sum(cM)
+    acc = correct_predictions / total_predictions if total_predictions > 0 else 0.0
     
     return acc
