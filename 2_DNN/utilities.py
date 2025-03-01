@@ -63,7 +63,7 @@ def build_DNN(input_shape, n_hidden_layers, n_hidden_units, loss, act_fun='sigmo
     # Add layers to the model, using the input parameters of the build_DNN function
     
     # Add first (Input) layer, requires input shape
-    model.add(Dense(n_hidden_units, activation = act_fun, input_shape = input_shape)
+    model.add(Dense(n_hidden_units, activation = act_fun, input_shape = input_shape))
     
     # Add remaining layers. These to not require the input shape since it will be infered during model compile
     for _ in range(n_hidden_layers):
