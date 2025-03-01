@@ -45,7 +45,12 @@ def build_DNN(input_shape, n_hidden_layers, n_hidden_units, loss, act_fun='sigmo
     # === Your code here =========================
     # --------------------------------------------      
     # Setup optimizer, depending on input parameter string
-    optimizer = ???
+    if optimizer == 'sgd':
+        optimizer = SGD(learning_rate = learning_rate)
+    elif optimizer == 'adam':
+        optimizer = Adam(learning_rate = learning_rate)
+    else:
+        raise ValueError("Unknown optimizer. Choose from sgd or adam.")
 
     # ============================================
 
@@ -58,17 +63,25 @@ def build_DNN(input_shape, n_hidden_layers, n_hidden_units, loss, act_fun='sigmo
     # Add layers to the model, using the input parameters of the build_DNN function
     
     # Add first (Input) layer, requires input shape
-    ???
+    model.add(Dense(n_hidden_units, activation = act_fun, input_shape = input_shape)
     
     # Add remaining layers. These to not require the input shape since it will be infered during model compile
     for _ in range(n_hidden_layers):
-        ???
-         
+        model.add(Dense(n_hidden_units, activation = act_fun))
+        
+        if use_bn:
+            model.add(BatchNormalization())
+
+        if use_dropout:
+            model.add(Dropout(0.5))
+        elif use_custom_dropout:
+            model.add(myDropout(0.3))
+    
     # Add final layer
-    ???
+    model.add(Dense(1, activation = 'sigmoid'))
     
     # Compile model
-    model.compile(???)
+    model.compile(optimizer = optimizer, loss = loss, metrics = ['accuracy'])
 
     # ============================================
     # Print model summary if requested
@@ -109,15 +122,18 @@ def train_DNN(config, data, training_config):
     # === Your code here =========================
     # --------------------------------------------
     # Unpack the data tuple
-    X_train, y_train, X_val, y_val = ???
+    X_train, y_train, X_val, y_val = data
 
     # Build the model using the variables stored into the config dictionary.
     # Hint: you provide the config dictionary to the build_DNN function as a keyword argument using the ** operator.
-    model = ???
+    model = build_DNN(**config)
         
     # Train the model (no need to save the history, as the callback will log the results).
     # Remember to add the TuneReporterCallback() to the list of callbacks.
-    model.fit(???) 
+    model.fit(X_train, y_train, validation_data = (X_val, y_val),
+              epochs = training_config['epochs'], 
+              batch_size = training_config['batch_size'],
+              callbacks = [TuneReporterCallback()])
 
     # --------------------------------------------
 
