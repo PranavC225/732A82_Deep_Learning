@@ -63,11 +63,19 @@ def build_DNN(input_shape, n_hidden_layers, n_hidden_units, loss, act_fun='sigmo
     # Add layers to the model, using the input parameters of the build_DNN function
     
     # Add first (Input) layer, requires input shape
-    model.add(Dense(n_hidden_units, activation = act_fun, input_shape = input_shape))
+    if use_variational_layer == False:
+        model.add(Dense(n_hidden_units, activation = act_fun, input_shape = input_shape))
+    else:
+        model.add(tfp.layers.DenseVariational(units = n_hidden_units, make_prior_fn = prior, make_posterior_fn = posterior,
+                                              kl_weight = 1 / 10000, activation = act_fun, input_shape = input_shape))
     
     # Add remaining layers. These to not require the input shape since it will be infered during model compile
     for _ in range(n_hidden_layers):
-        model.add(Dense(n_hidden_units, activation = act_fun))
+        if use_variational_layer == False:
+            model.add(Dense(n_hidden_units, activation = act_fun))
+        else:
+            model.add(tfp.layers.DenseVariational(units = n_hidden_units, make_prior_fn = prior, make_posterior_fn = posterior,
+                                              kl_weight = 1 / 10000, activation = act_fun))
         
         if use_bn:
             model.add(BatchNormalization())
