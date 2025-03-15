@@ -13,25 +13,17 @@ seed(123)
 
 import matplotlib.pyplot as plt
 
-# from ray import train
-
-# # Set seed from random number generator, for better comparisons
-# from numpy.random import seed
-# seed(123)
-
-# import matplotlib.pyplot as plt
-
-# define funstion that builds a CNN model
+# Define function that builds a CNN model
 def build_CNN(input_shape, loss, 
-                n_conv_layers:int=2, 
-                n_filters:int=16, 
-                n_dense_layers:int=0, 
-                n_nodes:int=50, 
-                use_dropout:bool=False, 
-                learning_rate:float=0.01, 
-                act_fun='sigmoid', 
-                optimizer:str='sgd',
-                print_summary:bool=False):
+              n_conv_layers=2, 
+              n_filters=16, 
+              n_dense_layers=0, 
+              n_nodes=50, 
+              use_dropout=False, 
+              learning_rate=0.01, 
+              act_fun='relu', 
+              optimizer='sgd',
+              print_summary=False):
     """
     Builds a Convolutional Neural Network (CNN) model based on the provided parameters.
     
@@ -44,7 +36,7 @@ def build_CNN(input_shape, loss,
     n_nodes (int, optional): Number of nodes in each dense layer. Default is 50.
     use_dropout (bool, optional): Whether to use Dropout after each layer. Default is False.
     learning_rate (float, optional): Learning rate for the optimizer. Default is 0.01.
-    act_fun (str, optional): Activation function to use in each layer. Default is 'sigmoid'.
+    act_fun (str, optional): Activation function to use in each layer. Default is 'relu'.
     optimizer (str, optional): Optimizer to use in the model. Default is SGD.
     print_summary (bool, optional): Whether to print a summary of the model. Default is False.
     
@@ -52,46 +44,61 @@ def build_CNN(input_shape, loss,
     model (Sequential): Compiled Keras Sequential model.
     """
 
-    # --------------------------------------------
-    # === Your code here =========================
-    # --------------------------------------------  
-
     # Setup optimizer, depending on input parameter string
-    ???
-    
-    # ============================================
-    
+    if optimizer.lower() == 'sgd':
+        optimizer = SGD(learning_rate=learning_rate)
+    elif optimizer.lower() == 'adam':
+        optimizer = Adam(learning_rate=learning_rate)
+    else:
+        raise ValueError("Optimizer must be 'sgd' or 'adam'.")
+
     # Setup a sequential model
     model = Sequential()
 
-    # --------------------------------------------
-    # === Your code here =========================
-    # --------------------------------------------  
-    
     # Add convolutional layers
-    for i in range(???):
-        ???
-    
-    # Flatten the output of the convolutional layers
-    ???
-    
-    # Add dense layers
-    for i in range(???):
-        ???
-    
-    # Add output layer
-    ???
-    
-    # Compile the model
-    ???
+    for i in range(n_conv_layers):
+        if i == 0:
+            # First convolutional layer: specify input_shape
+            model.add(Conv2D(filters=n_filters * (2 ** i),  # Double filters for each layer
+                             kernel_size=(3, 3),
+                             padding='same',
+                             activation=act_fun,
+                             input_shape=input_shape))
+        else:
+            # Subsequent convolutional layers: do not specify input_shape
+            model.add(Conv2D(filters=n_filters * (2 ** i),  # Double filters for each layer
+                             kernel_size=(3, 3),
+                             padding='same',
+                             activation=act_fun))
+        model.add(BatchNormalization())
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        if use_dropout:
+            model.add(Dropout(0.25))
 
-    # ============================================
+    # Flatten the output of the convolutional layers
+    model.add(Flatten())
+
+    # Add dense layers
+    for i in range(n_dense_layers):
+        model.add(Dense(units=n_nodes, activation=act_fun))
+        model.add(BatchNormalization())
+        if use_dropout:
+            model.add(Dropout(0.5))
+
+    # Add output layer
+    model.add(Dense(units=10, activation='softmax'))  # Assuming 10 classes for CIFAR-10
+
+    # Compile the model
+    model.compile(optimizer=optimizer,
+                  loss=loss,
+                  metrics=['accuracy'])
 
     # Print model summary if requested
     if print_summary:
         model.summary()
-    
+
     return model
+
 
 # =======================================
 # PLOTTING FUNCTIONS
@@ -107,25 +114,24 @@ def plot_results(history):
     Returns:
     None
     """
-    
     val_loss = history.history['val_loss']
     acc = history.history['accuracy']
     loss = history.history['loss']
     val_acc = history.history['val_accuracy']
-    
-    plt.figure(figsize=(10,4))
+
+    plt.figure(figsize=(10, 4))
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.plot(loss)
     plt.plot(val_loss)
-    plt.legend(['Training','Validation'])
+    plt.legend(['Training', 'Validation'])
 
-    plt.figure(figsize=(10,4))
+    plt.figure(figsize=(10, 4))
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.plot(acc)
     plt.plot(val_acc)
-    plt.legend(['Training','Validation'])
+    plt.legend(['Training', 'Validation'])
 
     plt.show()
 
@@ -136,7 +142,12 @@ def plot_results(history):
 
 # ROTATE IMAGES BY () DEGREES
 def myrotate(images):
-
-    images_rot = np.rot90(images, axes=(1,2))
-    
+    """
+    Rotates images by 90 degrees.
+    Parameters:
+    images (numpy.ndarray): Input images to rotate.
+    Returns:
+    images_rot (numpy.ndarray): Rotated images.
+    """
+    images_rot = np.rot90(images, axes=(1, 2))
     return images_rot
