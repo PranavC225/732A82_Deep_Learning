@@ -63,7 +63,7 @@ model. Default is False.
 
     # Setup a sequential model
     model = Sequential()
-
+     
     # Add convolutional layers
     for i in range(n_conv_layers):
         if i == 0:
@@ -101,3 +101,52 @@ kernel_size=(3, 3), padding='same', activation=act_fun))
         model.summary()
 
     return model
+
+
+# =======================================
+# PLOTTING FUNCTIONS
+# =======================================
+
+# TRAINING CURVES PLOT FUNCTION
+def plot_results(history):
+    """
+    Plots the training and validation loss and accuracy from a Keras history object.
+    Parameters:
+    history (keras.callbacks.History): A History object returned by the fit method of a Keras model. 
+                                       It contains the training and validation loss and accuracy for each epoch.
+    Returns:
+    None
+    """
+    
+    val_loss = history.history['val_loss']
+    acc = history.history['accuracy']
+    loss = history.history['loss']
+    val_acc = history.history['val_accuracy']
+    
+    plt.figure(figsize=(10,4))
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.plot(loss)
+    plt.plot(val_loss)
+    plt.legend(['Training','Validation'])
+
+    plt.figure(figsize=(10,4))
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.plot(acc)
+    plt.plot(val_acc)
+    plt.legend(['Training','Validation'])
+
+    plt.show()
+
+
+# =======================================
+# AUGMENTATIONS FUNCTIONS
+# =======================================
+
+# ROTATE IMAGES BY () DEGREES
+def myrotate(images):
+
+    images_rot = np.rot90(images, axes=(1,2))
+    
+    return images_rot
