@@ -3,8 +3,7 @@ import tensorflow as tf
 import tf_keras as keras
 
 from tf_keras.models import Sequential, Model
-from tf_keras.layers import Input, Dense, BatchNormalization, Dropout,
-Conv2D, MaxPooling2D, Flatten
+from tf_keras.layers import Input, Dense, BatchNormalization, Dropout, Conv2D, MaxPooling2D, Flatten
 from tf_keras.optimizers import SGD, Adam
 
 # Set seed from random number generator, for better comparisons
@@ -68,15 +67,13 @@ model. Default is False.
     for i in range(n_conv_layers):
         if i == 0:
             # First layer: specify input_shape
-            model.add(Conv2D(filters=n_filters * (2**i),
-kernel_size=(3, 3), padding='same', activation=act_fun,
-input_shape=input_shape))
+            model.add(Conv2D(filters = n_filters * (2**i), kernel_size = (3, 3), 
+                             padding = 'same', activation = act_fun, input_shape = input_shape))
         else:
-            # Subsequent layers: do not specify input_shape
-            model.add(Conv2D(filters=n_filters * (2**i),
-kernel_size=(3, 3), padding='same', activation=act_fun))
+            # Other layers: do not specify input_shape
+            model.add(Conv2D(filters = n_filters * (2**i), kernel_size = (3, 3), padding = 'same', activation = act_fun))
         model.add(BatchNormalization())
-        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(MaxPooling2D(pool_size = (2, 2)))
         if use_dropout:
             model.add(Dropout(0.25))
 
@@ -85,16 +82,16 @@ kernel_size=(3, 3), padding='same', activation=act_fun))
 
     # Add dense layers
     for i in range(n_dense_layers):
-        model.add(Dense(n_nodes, activation=act_fun))
+        model.add(Dense(n_nodes, activation = act_fun))
         model.add(BatchNormalization())
         if use_dropout:
             model.add(Dropout(0.5))
 
     # Add output layer
-    model.add(Dense(10, activation='softmax'))  # 10 classes for CIFAR10
+    model.add(Dense(10, activation = 'softmax'))  # 10 classes for CIFAR10
 
     # Compile the model
-    model.compile(optimizer=optimizer, loss=loss, metrics=['accuracy'])
+    model.compile(optimizer = optimizer, loss = loss, metrics = ['accuracy'])
 
     # Print model summary if requested
     if print_summary:
