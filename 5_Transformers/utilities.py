@@ -42,20 +42,21 @@ def scaled_dot_product_attention(q, k, v):
 
     # --------------------------------------------
     # === Your code here =========================
+    # COMPLETED THIS CODE BLOCK
     # --------------------------------------------
 
     # Compute the dot product between queries and keys.
-    matmul_qk = ...  # Shape: (batch_size, num_heads, seq_len_q, seq_len_k)
+    matmul_qk = tf.matmul(q, k, transpose_b = True) # Shape: (batch_size, num_heads, seq_len_q, seq_len_k) #MODIFIED
 
     # Scale the dot products by the square root of the depth.
-    dk = ...
-    scaled_attention_logits = ...
-
+    dk =  tf.cast(tf.shape(k)[-1], tf.float32) #MODIFIED
+    scaled_attention_logits = matmul_qk / tf.math.sqrt(dk) #MODIFIED
+    
     # Apply the softmax function to obtain the attention weights (use tf.nn.softmax).
-    attention_weights = ...  # Shape: (batch_size, num_heads, seq_len_q, seq_len_k)
+    attention_weights = tf.nn.softmax(scaled_attention_logits, axis=-1) # Shape: (batch_size, num_heads, seq_len_q, seq_len_k) #MODIFIED
 
     # Compute the weighted sum of the values.
-    output = ...  # Shape: (batch_size, num_heads, seq_len_q, depth)
+    output = tf.matmul(attention_weights, v)  # Shape: (batch_size, num_heads, seq_len_q, depth) #MODIFIED
 
     # ============================================
 
