@@ -86,12 +86,17 @@ class MultiHeadAttention(layers.Layer):
         # === Your code here =========================
         # --------------------------------------------
 
+        self.n_heads = n_heads #MODIFIED
+        self.proj_size = proj_size #MODIFIED
+        self.dk = dk #MODIFIED
+        self.dv = dv #MODIFIED
+        
         # Initialize the weights for the projection layers. Note that here we are combining all the heads together.
         # Remember to set the trainable parameter to True
-        self.WQ = tf.Variable(...)  # of shape (n_heads, proj_size, dq=dk)
-        self.WK = tf.Variable(...)  # of shape (n_heads, proj_size, dk=dq)
-        self.WV = tf.Variable(...)  # of shape (n_heads, proj_size, dv)
-        self.WO = tf.Variable(...)  # of shape (n_heads*proj_size, proj_size)
+        self.WQ = tf.Variable(initializer(shape = (n_heads, dk, proj_size)), trainable = True)  # of shape (n_heads, dq=dk, proj_size) #MODIFIED and CORRECTION
+        self.WK = tf.Variable(initializer(shape = (n_heads, dk, proj_size)), trainable = True)  # of shape (n_heads, dk=dq, proj_size) #MODIFIED and CORRECTION
+        self.WV = tf.Variable(initializer(shape = (n_heads, dv, proj_size)), trainable = True)  # of shape (n_heads, dv, proj_size)    #MODIFIED and CORRECTION
+        self.WO = tf.Variable(initializer(shape = (n_heads * proj_size, proj_size)), trainable = True)  # of shape (n_heads*proj_size, proj_size) #MODIFIED
 
         # ============================================
 
@@ -127,31 +132,34 @@ class MultiHeadAttention(layers.Layer):
         # NOTE : here one needs to use tf.experimental.numpy.dot instead of tf.matmul as the former supports broadcasting.
 
         Qh = tf.experimental.numpy.dot(
-            ...
-        )  # of shape (batch_size, number_of_Q, n_heads, dk=dq)
+            Q, self.WQ
+        )  # of shape (batch_size, number_of_Q, n_heads, dk=dq) #MODIFIED
         Kh = tf.experimental.numpy.dot(
-            ...
-        )  # of shape (batch_size, number_of_K, n_heads, dk=dq)
+            K, self.WK
+        )  # of shape (batch_size, number_of_K, n_heads, dk=dq) #MODIFIED
         Vh = tf.experimental.numpy.dot(
-            ...
-        )  # of shape (batch_size, number_of_V, n_heads, dv)
+            V, self.WV
+        )  # of shape (batch_size, number_of_V, n_heads, dv) #MODIFIED
 
         # Bring the number of queries, keys, and their dimension to the last two axes so that we can use the scaled_dot_product_attention function
-        Qh = tf.transpose(...)  # of shape (batch_size, H, number_of_Q, proj_size)
-        Kh = tf.transpose(...)  # of shape (batch_size, H, number_of_K, proj_size)
-        Vh = tf.transpose(...)  # of shape (batch_size, H, number_of_V, proj_size)
+        Qh = tf.transpose(Qh, perm = [0, 2, 1, 3])  # of shape (batch_size, H, number_of_Q, proj_size) #MODIFIED
+        Kh = tf.transpose(Kh, perm = [0, 2, 1, 3])  # of shape (batch_size, H, number_of_K, proj_size) #MODIFIED
+        Vh = tf.transpose(Vh, perm = [0, 2, 1, 3])  # of shape (batch_size, H, number_of_V, proj_size) #MODIFIED
 
         # Computing the dot-product attention
         attention_pooling_h, attention_weights_h = scaled_dot_product_attention(
-            ...
-        )  # of shape (batch_size, n_heads, number_of_Q, proj_size)
+            Qh, Kh, Vh
+        )  # of shape (batch_size, n_heads, number_of_Q, proj_size) #MODIFIED
 
         # Flattening (concatenate) across the number of heads.
-        A = tf.reshape(...)  # of shape (batch_size, number_of_Q, n_heads*proj_dim)
+        A = tf.reshape(tf.transpose(attention_pooling_h, perm = [0, 2, 1, 3]),
+                      (tf.shape(attention_pooling_h)[0], 
+                       tf.shape(attention_pooling_h)[2], 
+                       self.n_heads * self.proj_size))  # of shape (batch_size, number_of_Q, n_heads*proj_dim)
 
         # Projecting the concatenated heads to the output space
         A = tf.experimental.numpy.dot(
-            ...
+            A, self.WO
         )  # of shape (batch_size, number_of_Q, proj_dim)
 
         # ============================================
