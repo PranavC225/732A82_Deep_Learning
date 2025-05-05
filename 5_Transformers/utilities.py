@@ -186,6 +186,7 @@ def mlp(x, hidden_units, dropout_rate):
     # --------------------------------------------
     # === Your code here =========================
     # --------------------------------------------
+    
 
     for units in hidden_units:
         x = tf.keras.layers.Dense(units, activation='relu')(x)
@@ -213,31 +214,30 @@ def transformerBlock(x, num_heads, projection_dim, transformer_units, dropout_ra
     # --------------------------------------------
     # === Your code here =========================
     # --------------------------------------------
+    # Multi-head self-attention
+    attention_output = MultiHeadAttention(
+        n_heads=num_heads,
+        proj_size=projection_dim,
+        dk=projection_dim,
+        dv=projection_dim,
+    )(x, x, x)  # Self-attention: query = key = value = x
+    # NOTE: here we are using the MultiHeadAttention layer to compute the SELF ATTENTION
 
-    # apply the multi-head attention
-    attention_output = MultiHeadAttention(...)(
-        ...
-    )  # NOTE: here we are using the MultiHeadAttention layer to compute the SELF ATTENTION
+    # Dropout
+    attention_output = Dropout(dropout_rate)(attention_output)
 
-    # apply dropout
-    attention_output = ...
+    # First residual connection and layer normalization
+    out1 = LayerNormalization(epsilon=1e-6)(x + attention_output)
 
-    # apply the skip connection and layer normalization
-    x1 = ...
+    # Feed-forward network (MLP block)
+    mlp_output = mlp(out1, hidden_units=transformer_units, dropout_rate=dropout_rate)
 
-    # apply the MLP
-    mlp_output = mlp(...)
+    # Second residual connection and layer normalization
+    out2 = LayerNormalization(epsilon=1e-6)(out1 + mlp_output)
 
-    # apply dropout
-    mlp_output = ...
+    return out2
 
-    # apply the skip connection and layer normalization
-    x2 = ...
-
-    # ============================================
-    return x2
-
-
+    
 class PatchExtractor(Layer):
     def __init__(self, patch_size=16):
         """
@@ -267,16 +267,27 @@ class PatchExtractor(Layer):
         batch_size = tf.shape(images)[0]
 
         # Use the tf.image.extract_patches function to extract patches from the images (see documentation for details: https://www.tensorflow.org/api_docs/python/tf/image/extract_patches)
-        patches = tf.image.extract_patches(...)
+        patches = tf.image.extract_patches(images=images,
+            sizes=[1, self.patch_size, self.patch_size, 1],
+            strides=[1, self.patch_size, self.patch_size, 1],
+            rates=[1, 1, 1, 1],
+            padding='VALID')
 
         # get the dimensions of the patches tensor
-        patch_dims = ...
+        patch_dims = patches.shape[-1]
+
+        # Number of patches per image = (H / patch_size) * (W / patch_size)
+        num_patches = patches.shape[1] * patches.shape[2]
 
         # reshape the patches tensor to have the correct shape (batch_size, num_patches, patch_dims)
-        patches = tf.reshape(...)
+        patches = tf.reshape(patches, [batch_size, num_patches, patch_dims])
 
         # ============================================
         return patches
+    def get_config(self):
+        config = super(PatchExtractor, self).get_config()
+        config.update({"patch_size": self.patch_size})
+        return config
 
 
 class PatchEncoder(Layer):
@@ -309,26 +320,26 @@ class PatchEncoder(Layer):
         # --------------------------------------------
 
         # get the batch size
-        batch = ...
+        batch = tf.shape(patch)[0]
 
         # Reshape the class token embeddings (first make as many copies as the batch size and then reshape)
         # Use the tf.tile function to make as many copies of the class token as the batch size (see documentation for details: https://www.tensorflow.org/api_docs/python/tf/tile)
-        class_token = tf.tile(...)
-        class_token = tf.reshape(...)  # shape: (batch_size, 1, projection_dim)
+        class_token = tf.tile(self.class_token[tf.newaxis, ...], [batch, 1, 1])
+        #class_token = tf.reshape(...)  # shape: (batch_size, 1, projection_dim)
 
         # Project the patches using the projection layer
-        patches_embed = self.projection(...)
+        patches_embed = self.projection(patch)
         # patches_embed = patch
 
         # concatenate the class token to the patches
-        patches_embed = tf.concat(...)
+        patches_embed = tf.concat([class_token, patches_embed], axis=1)
 
         # calculate positional embeddings based on the number of patches (how many positions?)
-        positions = tf.range(...)
-        positions_embed = self.position_embedding(...)
+        positions = tf.range(start=0, limit=self.num_patches + 1, delta=1)
+        positions_embed = self.position_embedding(positions)
 
         # add the positional embeddings to the patch embeddings
-        encoded = ...
+        encoded = patches_embed + positions_embed
 
         # ============================================
 
