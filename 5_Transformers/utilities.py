@@ -384,20 +384,21 @@ def create_vit_classifier(
     # --------------------------------------------
 
     # Define input layer
-    inputs = ...
+    inputs = Input(shape = input_shape)
 
     # Augment data (if provided)
     if data_augmentation is not None:
         inputs = data_augmentation(inputs)
 
     # Create patches.
-    patches = ...
+    patches = PatchExtractor(inputs)
 
     # Encode patches.
     ## Calculate the number of patches
-    num_patches = ...
+    num_patches = (input_shape[0] // patch_size) * (input_shape[1] // patch_size)
     ## Encode the patches using the PatchEncoder layer
-    encoded_patches = ...
+    patch_encoder = PatchEncoder(num_patches=num_patches, projection_dim=embedding_proj_dim)
+    encoded_patches = patch_encoder(patches)
 
     # Create multiple layers of the Transformer block
     ## define mlp transformer units based on the msa_proj_dim
@@ -407,17 +408,20 @@ def create_vit_classifier(
     ]  # Size of the transformer layers
 
     for _ in range(transformer_layers):
-        encoded_patches = ...
+        encoded_patches = transformerBlock(x, num_heads=num_heads, projection_dim=msa_proj_dim,
+                             transformer_units=transformer_units, dropout_rate=msa_dropout_rate)
+
 
     # Take out the class token (it is the last token)
-    representation = ...
+    representation = encoded_patches[:, 0]
 
     # classification head applied to the class token
     ## Add mpl
-    features = ...
+    features = mlp(class_token, hidden_units=mlp_classification_head_units,
+                   dropout_rate=mlp_classification_head_dropout_rate)
 
     ## features to the number of classes
-    logits = ...
+    logits = Dense(num_classes)(features)
 
     # ============================================
 
