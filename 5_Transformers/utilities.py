@@ -267,12 +267,13 @@ class PatchExtractor(Layer):
         batch_size = tf.shape(images)[0]
 
         # Use the tf.image.extract_patches function to extract patches from the images (see documentation for details: https://www.tensorflow.org/api_docs/python/tf/image/extract_patches)
-        patches = tf.image.extract_patches(images=images,
-            sizes=[1, self.patch_size, self.patch_size, 1],
-            strides=[1, self.patch_size, self.patch_size, 1],
-            rates=[1, 1, 1, 1],
-            padding='VALID')
+        #patches = tf.image.extract_patches(images=images,
+         #   sizes=[1, self.patch_size, self.patch_size, 1],
+          #  strides=[1, self.patch_size, self.patch_size, 1],
+           # rates=[1, 1, 1, 1],
+            #padding='VALID')
 
+        patches = tf.image.extract_patches(images, sizes=[1, self.patch_size, self.patch_size, 1],strides=[1, self.patch_size, self.patch_size, 1], rates=[1, 4, 4, 1], padding='VALID')
         # get the dimensions of the patches tensor
         patch_dims = patches.shape[-1]
 
