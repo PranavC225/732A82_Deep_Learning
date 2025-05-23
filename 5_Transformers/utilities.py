@@ -237,7 +237,6 @@ def transformerBlock(x, num_heads, projection_dim, transformer_units, dropout_ra
 
     return out2
 
-    
 class PatchExtractor(Layer):
     def __init__(self, patch_size=16):
         """
@@ -273,9 +272,9 @@ class PatchExtractor(Layer):
            # rates=[1, 1, 1, 1],
             #padding='VALID')
 
-        patches = tf.image.extract_patches(images, sizes=[1, self.patch_size, self.patch_size, 1],strides=[1, self.patch_size, self.patch_size, 1], rates=[1, 4, 4, 1], padding='VALID')
+        patches = tf.image.extract_patches(images, sizes=[1, self.patch_size, self.patch_size, 1],strides=[1, self.patch_size, self.patch_size, 1], rates=[1, 1, 1, 1], padding='VALID')
         # get the dimensions of the patches tensor
-        patch_dims = patches.shape[-1]
+        patch_dims = patches.shape[3]
 
         # Number of patches per image = (H / patch_size) * (W / patch_size)
         num_patches = patches.shape[1] * patches.shape[2]
@@ -285,11 +284,6 @@ class PatchExtractor(Layer):
 
         # ============================================
         return patches
-    def get_config(self):
-        config = super(PatchExtractor, self).get_config()
-        config.update({"patch_size": self.patch_size})
-        return config
-
 
 class PatchEncoder(Layer):
     def __init__(self, num_patches: int = 4, projection_dim: int = 768):
@@ -346,7 +340,7 @@ class PatchEncoder(Layer):
 
         return encoded
 
-
+        
 def create_vit_classifier(
     input_shape: tuple = (32, 32, 3),
     patch_size: int = 16,
