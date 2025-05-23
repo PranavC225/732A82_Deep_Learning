@@ -325,8 +325,8 @@ class PatchEncoder(Layer):
 
         # Reshape the class token embeddings (first make as many copies as the batch size and then reshape)
         # Use the tf.tile function to make as many copies of the class token as the batch size (see documentation for details: https://www.tensorflow.org/api_docs/python/tf/tile)
-        class_token = tf.tile(self.class_token[tf.newaxis, ...], [batch, 1, 1])
-        #class_token = tf.reshape(...)  # shape: (batch_size, 1, projection_dim)
+        class_token = tf.tile(self.class_token,[batch, 1])
+        class_token = tf.reshape(class_token,[batch,1,self.projection_dim])  # shape: (batch_size, 1, projection_dim)
 
         # Project the patches using the projection layer
         patches_embed = self.projection(patch)
@@ -396,7 +396,7 @@ def create_vit_classifier(
 
     # Encode patches.
     ## Calculate the number of patches
-    num_patches = (input_shape[0] // patch_size) * (input_shape[1] // patch_size)
+    num_patches = (input_shape[0] // patch_size) * (input_shape[1] // patch_size) #patches.shape[1]
     ## Encode the patches using the PatchEncoder layer
     patch_encoder = PatchEncoder(num_patches=num_patches, projection_dim=embedding_proj_dim)
     encoded_patches = patch_encoder(patches)
